@@ -1,4 +1,96 @@
+@font-face {
+  font-family: "Open Sans";
+  font-style: normal;
+  font-weight: 400;
+  src: url("./OpenSans-Regular.ttf");
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  color: #151515;
+  font-family: "Open Sans", sans-serif;
+}
+
+html,
+body,
+#root {
+  padding: 0;
+  margin: 0;
+  height: 100%;
+  width: 100%;
+}
+
 .App {
-  font-family: sans-serif;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
   text-align: center;
+  background-color: #f5f5f5;
+  height: 100%;
+}
+
+.Canvas {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background: #c3c3ce;
+  padding: 20px 85px;
+  border-radius: 4px;
+  box-shadow: 0 2.8px 2.2px rgba(0, 0, 0, 0.034),
+    0 6.7px 5.3px rgba(0, 0, 0, 0.048), 0 12.5px 10px rgba(0, 0, 0, 0.06),
+    0 22.3px 17.9px rgba(0, 0, 0, 0.072), 0 41.8px 33.4px rgba(0, 0, 0, 0.086),
+    0 100px 80px rgba(0, 0, 0, 0.12);
+}
+
+.Canvas_h1 {
+  font-size: 30px;
+  height: 45px;
+  margin: 0;
+  margin-bottom: 5px;
+}
+
+.Canvas_canvas {
+  border: 3px solid #151515;
+  border-radius: 3px;
+}
+
+.Canvas_sliders {
+  margin-top: 15px;
+  display: grid;
+  user-select: none;
+}
+
+.BrightnessSlider,
+.ColorSlider {
+  width: 400px;
+  display: grid;
+  grid-template:
+    "name slider value" 30px
+    / 1fr 2fr 30px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.BrightnessSlider_name,
+.ColorSlider_name {
+  grid-area: name;
+  text-align: left;
+  font-weight: bold;
+}
+
+.BrightnessSlider_slider,
+.ColorSlider_slider {
+  height: 10px;
+  grid-area: slider;
+}
+
+.BrightnessSlider_value,
+.ColorSlider_value {
+  grid-area: value;
+  text-align: right;
 }
