@@ -67,7 +67,6 @@ const reducer = (state, action) => {
       }
 
       px = applyColor(color, value, px, adjustedPx);
-      console.log(px);
       return { currentPx: px };
     case "brightness":
       // First apply current colors to original px (without brightness).
@@ -121,45 +120,47 @@ export default () => {
   const colors = { red, green, blue };
   const colorSetters = { setRed, setGreen, setBlue };
   return (
-    <>
-      <h1>Canvas</h1>
+    <div className="Canvas">
+      <h1 className="Canvas_h1">Canvas</h1>
       <canvas
+        className="Canvas_canvas"
         ref={canvasRef}
         width="400"
         height="600"
-        style={{ border: "1px solid red" }}
       />
-      <BrightnessSlider
-        callback={value => {
-          setBrightness(value);
-          dispatch({
-            type: "brightness",
-            payload: { value, originalPx, colors }
-          });
-        }}
-      />
-      {Object.keys(colors).map((color, key) => {
-        const colorCaps = color.charAt(0).toUpperCase() + color.slice(1);
-        return (
-          <ColorSlider
-            key={key}
-            callback={value => {
-              colorSetters[`set${colorCaps}`](value);
-              dispatch({
-                type: "color",
-                payload: {
-                  color: color,
-                  value,
-                  originalPx,
-                  brightness,
-                  colors
-                }
-              });
-            }}
-            color={color}
-          />
-        );
-      })}
-    </>
+      <div className="Canvas_sliders">
+        <BrightnessSlider
+          callback={value => {
+            setBrightness(value);
+            dispatch({
+              type: "brightness",
+              payload: { value, originalPx, colors }
+            });
+          }}
+        />
+        {Object.keys(colors).map((color, key) => {
+          const colorCaps = color.charAt(0).toUpperCase() + color.slice(1);
+          return (
+            <ColorSlider
+              key={key}
+              callback={value => {
+                colorSetters[`set${colorCaps}`](value);
+                dispatch({
+                  type: "color",
+                  payload: {
+                    color: color,
+                    value,
+                    originalPx,
+                    brightness,
+                    colors
+                  }
+                });
+              }}
+              color={color}
+            />
+          );
+        })}
+      </div>
+    </div>
   );
 };

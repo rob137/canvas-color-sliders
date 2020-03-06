@@ -11,10 +11,11 @@ export default ({ callback }) => {
   };
 
   return (
-    <div>
-      <span>Brightness:</span>
+    <div className="BrightnessSlider">
+      <span className="BrightnessSlider_name">Brightness:</span>
       <input
         type="range"
+        className="BrightnessSlider_slider"
         value={brightness}
         onChange={v => {
           handleChange(parseInt(v.target.value));
@@ -22,7 +23,7 @@ export default ({ callback }) => {
         min={-50}
         max={50}
       />
-      <span>{brightness}</span>
+      <span className="BrightnessSlider_value">{brightness}</span>
     </div>
   );
 };

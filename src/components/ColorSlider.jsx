@@ -12,10 +12,11 @@ export default ({ callback, color }) => {
 
   const colorCaps = color[0].toUpperCase() + color.slice(1);
   return (
-    <div>
-      <span>{colorCaps}</span>
+    <div className="ColorSlider">
+      <span className="ColorSlider_name">{colorCaps}:</span>
       <input
         type="range"
+        className="ColorSlider_slider"
         value={value}
         onChange={v => {
           handleChange(parseInt(v.target.value));
@@ -23,7 +24,7 @@ export default ({ callback, color }) => {
         min={0}
         max={50}
       />
-      <span>{value}</span>
+      <span className="ColorSlider_value">{value}</span>
     </div>
   );
 };
