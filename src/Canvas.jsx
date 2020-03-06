@@ -18,6 +18,7 @@ export default () => {
   const [green, setGreen] = useState(0);
   const [blue, setBlue] = useState(0);
   const canvasRef = useRef(null);
+  const colorDict = { red, green, blue };
 
   useEffect(() => {
     let image = new Image();
@@ -29,27 +30,34 @@ export default () => {
     image.src = "tubulin.png";
   }, []);
 
-  useEffect(() => {}, [brightness, red, green, blue]);
-
-  const updateImage = (canvas, originalPixels, value, color) => {
+  useEffect(() => {
+    const canvas = canvasRef.current;
     const colors = ["red", "green", "blue"];
     const [w, h] = [canvas.width, canvas.height];
     const context = canvas.getContext("2d");
     const imageData = context.createImageData(w, h);
     let pixels = imageData.data;
 
+    // Apply colors
+    colors.forEach(color => {
+      const index = colors.indexOf(color);
+      for (let p = index; p < pixels.length; p += 4) {
+        pixels[p] = originalPixels[p] + colorDict[color];
+      }
+    });
+    // Apply brightness
     for (let p = 0; p < pixels.length; p++) {
-      if (
-        (color === "brightness" && p % 4 !== 3) ||
-        p % 4 === colors.indexOf(color)
-      ) {
-        pixels[p] = originalPixels[p] + value;
+      if (p % 4 !== 3) {
+        pixels[p] = pixels[p] + brightness;
       } else {
         pixels[p] = originalPixels[p];
       }
     }
+
     canvas.getContext("2d").putImageData(imageData, 0, 0);
-  };
+  }, [brightness, red, green, blue]);
+
+  const updateImage = (canvas, originalPixels, value, color) => {};
 
   return (
     <>
@@ -68,7 +76,6 @@ export default () => {
       />
       <ColorSlider
         callback={v => {
-          updateImage(canvasRef.current, originalPixels, v, "red");
           setRed(v);
         }}
         color={"red"}
