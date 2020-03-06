@@ -25,8 +25,10 @@ const getOriginalPixels = (canvas, image) => {
 const applyBrightness = (value, px, basePx) => {
   for (let p = 0; p < px.length; p += 1) {
     if (p % 4 !== 3) {
+      // Change all colors.
       px[p] = basePx[p] + value;
     } else {
+      // Don't change alpha.
       px[p] = basePx[p];
     }
   }
@@ -108,7 +110,7 @@ export default () => {
   }, []);
 
   useEffect(() => {
-    // Update canvas following updates to state.
+    // Update canvas following changes to state.
     const { context, imageData, px } = fromCanvas(canvasRef);
     for (let p = 0; p < px.length; p++) {
       px[p] = state.currentPx[p];
@@ -117,6 +119,7 @@ export default () => {
   }, [state.currentPx]);
 
   const colors = { red, green, blue };
+  const colorSetters = { setRed, setGreen, setBlue };
   return (
     <>
       <h1>Canvas</h1>
@@ -135,36 +138,28 @@ export default () => {
           });
         }}
       />
-      <ColorSlider
-        callback={value => {
-          setRed(value);
-          dispatch({
-            type: "color",
-            payload: { color: "red", value, originalPx, brightness, colors }
-          });
-        }}
-        color={"red"}
-      />
-      <ColorSlider
-        callback={value => {
-          setGreen(value);
-          dispatch({
-            type: "color",
-            payload: { color: "green", value, originalPx, brightness, colors }
-          });
-        }}
-        color={"green"}
-      />
-      <ColorSlider
-        callback={value => {
-          setBlue(value);
-          dispatch({
-            type: "color",
-            payload: { color: "blue", value, originalPx, brightness, colors }
-          });
-        }}
-        color={"blue"}
-      />
+      {Object.keys(colors).map((color, key) => {
+        const colorCaps = color.charAt(0).toUpperCase() + color.slice(1);
+        return (
+          <ColorSlider
+            key={key}
+            callback={value => {
+              colorSetters[`set${colorCaps}`](value);
+              dispatch({
+                type: "color",
+                payload: {
+                  color: color,
+                  value,
+                  originalPx,
+                  brightness,
+                  colors
+                }
+              });
+            }}
+            color={color}
+          />
+        );
+      })}
     </>
   );
 };
