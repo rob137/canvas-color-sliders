@@ -2,13 +2,14 @@ import React, { useEffect, useReducer, useRef, useState } from "react";
 import BrightnessSlider from "./components/BrightnessSlider";
 import ColorSlider from "./components/ColorSlider";
 
+// To unpack commonly-used variables.
 const fromCanvas = canvasRef => {
   const canvas = canvasRef.current;
   const [w, h] = [canvas.width, canvas.height];
   const context = canvas.getContext("2d");
   const imageData = context.createImageData(w, h);
-  const pixels = imageData.data;
-  return { canvas, w, h, context, imageData, pixels };
+  const px = imageData.data;
+  return { canvas, w, h, context, imageData, px };
 };
 
 const getOriginalPixels = (canvas, image) => {
@@ -21,64 +22,85 @@ const getOriginalPixels = (canvas, image) => {
   return [];
 };
 
-const applyColor = (color, value, pixels, originalPixels) => {
+const applyBrightness = (value, px, basePx) => {
+  for (let p = 0; p < px.length; p += 1) {
+    if (p % 4 !== 3) {
+      px[p] = basePx[p] + value;
+    } else {
+      px[p] = basePx[p];
+    }
+  }
+  return px;
+};
+
+const applyColor = (color, value, px, basePx) => {
   const colors = ["red", "green", "blue"];
   const colorIndex = colors.indexOf(color);
-  for (let p = colorIndex; p < pixels.length; p += 4) {
-    pixels[p] = originalPixels[p] + value;
+  for (let p = colorIndex; p < px.length; p += 4) {
+    px[p] = basePx[p] + value;
   }
-  return pixels;
+  return px;
 };
 
 const reducer = (state, action) => {
-  const { value, originalPixels } = action.payload;
-  let pixels = Uint8ClampedArray.from(state.currentPixels);
+  const { color, colors, brightness, value, originalPx } = action.payload;
+  let px = Uint8ClampedArray.from(state.currentPx);
+  let coloredPx = Uint8ClampedArray.from(state.currentPx);
   switch (action.type) {
     case "initial":
-      return { currentPixels: action.payload };
+      return { currentPx: action.payload };
     case "color":
-      const { color } = action.payload;
-      pixels = applyColor(color, value, pixels, originalPixels);
-      return { currentPixels: pixels };
-    case "brightness":
-      const { currentColors } = action.payload;
-      let currentColoredPixels;
-      for (const colorName in currentColors) {
-        currentColoredPixels = applyColor(
-          colorName,
-          currentColors[colorName],
-          pixels,
-          originalPixels
-        );
-      }
-      for (let p = 0; p < pixels.length; p += 1) {
-        if (p % 4 !== 3) {
-          pixels[p] = currentColoredPixels[p] + value;
-        } else {
-          pixels[p] = originalPixels[p];
+      // First apply brightness to original px (without colors).
+      let adjustedPx = applyBrightness(brightness, px, originalPx);
+      // Then other colors.
+      for (const colorName in colors) {
+        if (colorName !== color) {
+          adjustedPx = applyColor(
+            colorName,
+            colors[colorName],
+            adjustedPx,
+            adjustedPx
+          );
         }
       }
-      return { currentPixels: pixels };
+
+      px = applyColor(color, value, px, adjustedPx);
+      console.log(px);
+      return { currentPx: px };
+    case "brightness":
+      // First apply current colors to original px (without brightness).
+      coloredPx = Uint8ClampedArray.from(originalPx);
+      for (const colorName in colors) {
+        coloredPx = applyColor(
+          colorName,
+          colors[colorName],
+          coloredPx,
+          coloredPx
+        );
+      }
+
+      px = applyBrightness(value, px, coloredPx);
+      return { currentPx: px };
     default:
       throw new Error();
   }
 };
 
 export default () => {
-  const [originalPixels, setOriginalPixels] = useState([]);
+  const [originalPx, setOriginalPx] = useState([]);
   const [brightness, setBrightness] = useState(0);
   const [red, setRed] = useState(0);
   const [green, setGreen] = useState(0);
   const [blue, setBlue] = useState(0);
   const canvasRef = useRef(null);
-  const initialState = { currentPixels: new Uint8ClampedArray() };
+  const initialState = { currentPx: new Uint8ClampedArray() };
   const [state, dispatch] = useReducer(reducer, initialState);
 
   useEffect(() => {
     const image = new Image();
     image.onload = () => {
       const op = getOriginalPixels(canvasRef.current, image);
-      setOriginalPixels(op);
+      setOriginalPx(op);
       dispatch({ type: "initial", payload: op });
     };
     image.crossOrigin = "Anonymous";
@@ -86,14 +108,15 @@ export default () => {
   }, []);
 
   useEffect(() => {
-    const { canvas, w, h, context, imageData, pixels } = fromCanvas(canvasRef);
-    for (let p = 0; p < pixels.length; p++) {
-      pixels[p] = state.currentPixels[p];
+    // Update canvas following updates to state.
+    const { context, imageData, px } = fromCanvas(canvasRef);
+    for (let p = 0; p < px.length; p++) {
+      px[p] = state.currentPx[p];
     }
     context.putImageData(imageData, 0, 0);
-  }, [brightness, red, green, blue]);
+  }, [state.currentPx]);
 
-  const currentColors = { red, green, blue };
+  const colors = { red, green, blue };
   return (
     <>
       <h1>Canvas</h1>
@@ -108,7 +131,7 @@ export default () => {
           setBrightness(value);
           dispatch({
             type: "brightness",
-            payload: { value, originalPixels, currentColors }
+            payload: { value, originalPx, colors }
           });
         }}
       />
@@ -117,7 +140,7 @@ export default () => {
           setRed(value);
           dispatch({
             type: "color",
-            payload: { color: "red", value, originalPixels }
+            payload: { color: "red", value, originalPx, brightness, colors }
           });
         }}
         color={"red"}
@@ -127,7 +150,7 @@ export default () => {
           setGreen(value);
           dispatch({
             type: "color",
-            payload: { color: "green", value, originalPixels }
+            payload: { color: "green", value, originalPx, brightness, colors }
           });
         }}
         color={"green"}
@@ -137,7 +160,7 @@ export default () => {
           setBlue(value);
           dispatch({
             type: "color",
-            payload: { color: "blue", value, originalPixels }
+            payload: { color: "blue", value, originalPx, brightness, colors }
           });
         }}
         color={"blue"}
