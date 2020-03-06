@@ -21,22 +21,44 @@ const getOriginalPixels = (canvas, image) => {
   return [];
 };
 
+const applyColor = (color, value, pixels, originalPixels) => {
+  const colors = ["red", "green", "blue"];
+  const colorIndex = colors.indexOf(color);
+  for (let p = colorIndex; p < pixels.length; p += 4) {
+    pixels[p] = originalPixels[p] + value;
+  }
+  return pixels;
+};
+
 const reducer = (state, action) => {
   const { value, originalPixels } = action.payload;
-  const pixels = Uint8ClampedArray.from(state.currentPixels);
+  let pixels = Uint8ClampedArray.from(state.currentPixels);
   switch (action.type) {
     case "initial":
       return { currentPixels: action.payload };
     case "color":
       const { color } = action.payload;
-      const colors = ["red", "green", "blue"];
-      const colorIndex = colors.indexOf(color);
-      for (let p = colorIndex; p < pixels.length; p += 4) {
-        pixels[p] = originalPixels[p] + value;
-      }
+      pixels = applyColor(color, value, pixels, originalPixels);
       return { currentPixels: pixels };
     case "brightness":
-      return "placeholder";
+      const { currentColors } = action.payload;
+      let currentColoredPixels;
+      for (const colorName in currentColors) {
+        currentColoredPixels = applyColor(
+          colorName,
+          currentColors[colorName],
+          pixels,
+          originalPixels
+        );
+      }
+      for (let p = 0; p < pixels.length; p += 1) {
+        if (p % 4 !== 3) {
+          pixels[p] = currentColoredPixels[p] + value;
+        } else {
+          pixels[p] = originalPixels[p];
+        }
+      }
+      return { currentPixels: pixels };
     default:
       throw new Error();
   }
@@ -44,6 +66,7 @@ const reducer = (state, action) => {
 
 export default () => {
   const [originalPixels, setOriginalPixels] = useState([]);
+  const [brightness, setBrightness] = useState(0);
   const [red, setRed] = useState(0);
   const [green, setGreen] = useState(0);
   const [blue, setBlue] = useState(0);
@@ -68,8 +91,9 @@ export default () => {
       pixels[p] = state.currentPixels[p];
     }
     context.putImageData(imageData, 0, 0);
-  }, [red, green, blue]);
+  }, [brightness, red, green, blue]);
 
+  const currentColors = { red, green, blue };
   return (
     <>
       <h1>Canvas</h1>
@@ -79,7 +103,15 @@ export default () => {
         height="600"
         style={{ border: "1px solid red" }}
       />
-      <BrightnessSlider callback={v => {}} />
+      <BrightnessSlider
+        callback={value => {
+          setBrightness(value);
+          dispatch({
+            type: "brightness",
+            payload: { value, originalPixels, currentColors }
+          });
+        }}
+      />
       <ColorSlider
         callback={value => {
           setRed(value);
