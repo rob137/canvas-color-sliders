@@ -1,0 +1,10 @@
+I started by using 'useEffect' to allow changing colors.  This didn't allow adjusting brightness or color together, only separately.
+
+I then starting thinking about how to adjust colors/brightness together (e.g. adjust brightness of a red-tinted image).  I realised that trying to use the current pixels displayed wouldn't do, as the adjustments would compound (e.g. adjusting the sldier from 30 brightness to 31 would result in an increase of 31 brightness, not 1).
+
+At this stage I tried using useEffect to listen for clicks to sliders and with each adjustment:
+1. Take the original (unaltered) pixels.
+1. Apply other current color/brightness values (if applicable).
+2. Apply the value from slider.
+
+This worked, but performance was slow because I was using multiple 'for loops' for each adjustment.  It felt like here I had the choice between multiple useEffect calls (to capture all the color/brightness cases) or useReducer, so I went from useEffect to useReducer for the sake of simplicity.  I'm uncertain if this did actually make things more simple than the alternative; I would typically discuss this first if I were working in a team.
